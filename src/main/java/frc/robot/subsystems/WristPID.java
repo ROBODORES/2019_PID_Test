@@ -10,34 +10,40 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import frc.robot.RobotMap;
 import frc.robot.commands.SetArm;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import edu.wpi.first.wpilibj.Encoder;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 
 /**
  * Add your docs here.
  */
-public class ArmPID extends PIDSubsystem {
-  VictorSPX armMotor = null;
-  Encoder armEncoder = null;
+public class WristPID extends PIDSubsystem {
+  TalonSRX wristMotor = null;
+  VictorSPX shooterMotor = null;
 
-  public ArmPID() {
-    super("ArmPID", 0.015, 0.0, 0.0);
+  public WristPID() {
+    // Intert a subsystem name and PID values here
+    super("WristPID", 0.008, 0.0, 0.0);
+
     setAbsoluteTolerance(0.05);
 
     getPIDController().setContinuous(false);
 
-    armMotor = new VictorSPX(RobotMap.armMotor);
+    wristMotor = new TalonSRX(RobotMap.wristMotor);
+    wristMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 
-    armEncoder = new Encoder(RobotMap.armSourceA, RobotMap.armSourceB);
-    armEncoder.setReverseDirection(true);
-    armEncoder.setDistancePerPulse(90.0/326.5);
+    shooterMotor = new VictorSPX(RobotMap.armIntakeMotor);
+  }
+
+  public double convertEncoderDistance(double encoderVal) {
+    return encoderVal*(90.0/169705.0);
   }
 
   @Override
   public void initDefaultCommand() {
     // Set the default command for a subsystem here.
-    setDefaultCommand(new SetArm());
+    // setDefaultCommand(new MySpecialCommand());
   }
 
   @Override
@@ -45,19 +51,27 @@ public class ArmPID extends PIDSubsystem {
     // Return your input value for the PID loop
     // e.g. a sensor, like a potentiometer:
     // yourPot.getAverageVoltage() / kYourMaxVoltage;
-    return armEncoder.getDistance();
+    return convertEncoderDistance(wristMotor.getSelectedSensorPosition());
   }
 
   @Override
   protected void usePIDOutput(double output) {
     // Use output to drive your system, like a motor
-    // e.g. yourMotor.set(output);
     double limiter = 0.4;
     if (output > limiter) {
       output = limiter;
     } else if (output < -limiter) {
       output = -limiter;
     }
-    armMotor.set(ControlMode.PercentOutput, output+0.25);
+    wristMotor.set(ControlMode.PercentOutput, output);
+  }
+
+  public void setShooter(double speed) {
+    shooterMotor.set(ControlMode.PercentOutput, speed);
+  }
+
+  public void stop() {
+    setShooter(0.0);
+    disable();
   }
 }

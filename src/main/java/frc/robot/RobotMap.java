@@ -28,6 +28,7 @@ public class RobotMap {
   public static final int leftStickPort = 0;
   public static final int rightStickPort = 1;
   public static final int sideStickPort = 2;
+  public static final int toggleSwitchPort = 3;
 
   public static final int gearSwitcherButton = 2;
 
